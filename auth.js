@@ -5,109 +5,57 @@ class UserManager {
         this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
         this.token = localStorage.getItem('token') || null;
         
-        // Initialize with admin user if no users exist
-        if (this.users.length === 0) {
-            this.createAdminUser();
+        // Check if we have a valid token from localStorage
+        if (this.token && !this.currentUser) {
+            this.fetchProfile();
         }
     }
     
-    createAdminUser() {
-        const adminUser = {
-            id: '1',
-            username: 'admin',
-            email: 'admin@notespro.com',
-            password: 'admin123', // In real app, this would be hashed
-            role: 'admin',
-            createdAt: new Date().toISOString()
-        };
-        this.users.push(adminUser);
-        this.saveUsers();
+    async fetchProfile() {
+        try {
+            const result = await apiService.getProfile();
+            this.currentUser = result.data;
+            localStorage.setItem('currentUser', JSON.stringify(result.data));
+        } catch (error) {
+            console.log('Session expired, logging out...');
+            this.logout();
+        }
     }
     
-    saveUsers() {
-        localStorage.setItem('users', JSON.stringify(this.users));
+    async register(username, email, password, role = 'user') {
+        try {
+            const result = await apiService.register({ username, email, password, role });
+            
+            if (result.success) {
+                this.currentUser = result.data.user;
+                this.token = result.data.token;
+                
+                localStorage.setItem('currentUser', JSON.stringify(result.data.user));
+                localStorage.setItem('token', result.data.token);
+                
+                return { success: true, data: result.data };
+            }
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     }
     
-    generateToken(userId) {
-        // Simple token generation for demo purposes
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substr(2);
-        return btoa(`${userId}:${timestamp}:${random}`);
-    }
-    
-    register(username, email, password, role = 'user') {
-        // Validate inputs
-        if (!username || !email || !password) {
-            return { success: false, message: 'All fields are required' };
+    async login(email, password) {
+        try {
+            const result = await apiService.login({ email, password });
+            
+            if (result.success) {
+                this.currentUser = result.data.user;
+                this.token = result.data.token;
+                
+                localStorage.setItem('currentUser', JSON.stringify(result.data.user));
+                localStorage.setItem('token', result.data.token);
+                
+                return { success: true, data: result.data };
+            }
+        } catch (error) {
+            return { success: false, message: error.message };
         }
-        
-        if (username.length < 3) {
-            return { success: false, message: 'Username must be at least 3 characters' };
-        }
-        
-        if (password.length < 6) {
-            return { success: false, message: 'Password must be at least 6 characters' };
-        }
-        
-        // Check if user already exists
-        const userExists = this.users.find(u => u.email === email || u.username === username);
-        if (userExists) {
-            return { success: false, message: 'User already exists with this email or username' };
-        }
-        
-        // Create new user
-        const newUser = {
-            id: Date.now().toString(),
-            username,
-            email,
-            password, // In real app, this would be hashed
-            role,
-            createdAt: new Date().toISOString()
-        };
-        
-        this.users.push(newUser);
-        this.saveUsers();
-        
-        // Auto login after registration
-        return this.login(email, password);
-    }
-    
-    login(email, password) {
-        // Find user
-        const user = this.users.find(u => u.email === email);
-        
-        if (!user) {
-            return { success: false, message: 'Invalid credentials' };
-        }
-        
-        // Check password (in real app, compare hashed passwords)
-        if (user.password !== password) {
-            return { success: false, message: 'Invalid credentials' };
-        }
-        
-        // Generate token
-        const token = this.generateToken(user.id);
-        
-        // Set current user and token
-        this.currentUser = user;
-        this.token = token;
-        
-        // Save to localStorage
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem('token', token);
-        
-        return { 
-            success: true, 
-            data: { 
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    email: user.email,
-                    role: user.role
-                },
-                token 
-            } 
-        };
     }
     
     logout() {
@@ -130,20 +78,9 @@ class UserManager {
         return this.currentUser && this.currentUser.role === 'admin';
     }
     
-    deleteUser(userId) {
-        if (this.currentUser && this.currentUser.id === userId) {
-            return { success: false, message: 'Cannot delete your own account' };
-        }
-        
-        const initialLength = this.users.length;
-        this.users = this.users.filter(u => u.id !== userId);
-        
-        if (this.users.length < initialLength) {
-            this.saveUsers();
-            return { success: true, message: 'User deleted successfully' };
-        }
-        
-        return { success: false, message: 'User not found' };
+    async deleteUser(userId) {
+        // Note: This would require admin endpoint
+        alert('Admin user deletion requires backend implementation');
     }
 }
 
@@ -153,7 +90,7 @@ const userManager = new UserManager();
 // Login Form Handler
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const email = document.getElementById('login-email').value.trim();
@@ -181,14 +118,24 @@ if (loginForm) {
         
         if (hasError) return;
         
-        // Attempt login
-        const result = userManager.login(email, password);
+        // Show loading state
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        submitBtn.disabled = true;
+        
+        // Attempt login via API
+        const result = await userManager.login(email, password);
+        
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
         
         if (result.success) {
             // Show success message
-            alert('Login successful! Redirecting to dashboard...');
+            showNotification('Login successful! Redirecting to dashboard...', 'success');
             
-            // Redirect to dashboard
+            // Redirect to dashboard after 1 second
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
@@ -202,7 +149,7 @@ if (loginForm) {
 // Register Form Handler
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
-    registerForm.addEventListener('submit', (e) => {
+    registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const username = document.getElementById('register-username').value.trim();
@@ -254,14 +201,24 @@ if (registerForm) {
         
         if (hasError) return;
         
-        // Attempt registration
-        const result = userManager.register(username, email, password, role);
+        // Show loading state
+        const submitBtn = registerForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+        submitBtn.disabled = true;
+        
+        // Attempt registration via API
+        const result = await userManager.register(username, email, password, role);
+        
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
         
         if (result.success) {
             // Show success message
-            alert('Registration successful! You are now logged in.');
+            showNotification('Registration successful! You are now logged in.', 'success');
             
-            // Redirect to dashboard
+            // Redirect to dashboard after 1 second
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
@@ -271,12 +228,69 @@ if (registerForm) {
     });
 }
 
+// Notification function
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelector('.notification');
+    if (existing) existing.remove();
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()">&times;</button>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Add CSS for slideIn animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
+
 // Logout functionality
 window.logout = function() {
     userManager.logout();
 };
 
-// Helper functions from script.js
+// Helper functions
 function showError(input, message) {
     const formGroup = input.parentElement;
     const errorElement = formGroup.querySelector('.error-message');
