@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Notes Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo">
+                <i class="fas fa-sticky-note"></i>
+                NotesPro
+            </a>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h4 id="username">Loading...</h4>
+                    <span class="user-role" id="user-role">User</span>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="notes">
+                <i class="fas fa-sticky-note"></i>
+                <span>My Notes</span>
+            </a>
+            <a href="#" class="nav-item" data-section="create">
+                <i class="fas fa-plus-circle"></i>
+                <span>Create Note</span>
+            </a>
+            <a href="#" class="nav-item" data-section="search">
+                <i class="fas fa-search"></i>
+                <span>Search Notes</span>
+            </a>
+            <a href="#" class="nav-item" data-section="upload">
+                <i class="fas fa-upload"></i>
+                <span>Upload Files</span>
+            </a>
+            <a href="#" class="nav-item" data-section="admin" id="admin-section">
+                <i class="fas fa-user-shield"></i>
+                <span>Admin Panel</span>
+            </a>
+            <a href="#" class="nav-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="storage-info">
+                <div class="storage-progress">
+                    <div class="progress-bar"></div>
+                </div>
+                <span>Storage: 1.2GB / 5GB</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <button class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 id="page-title">Dashboard</h2>
+            </div>
+            <div class="top-bar-right">
+                <button class="btn-notification">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-count">3</span>
+                </button>
+                <div class="user-dropdown">
+                    <button class="btn-user">
+                        <span id="user-email">user@example.com</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="#"><i class="fas fa-user"></i> Profile</a>
+                        <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="content-wrapper">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="welcome-banner">
+                    <h1>Welcome back, <span id="welcome-username">User</span>!</h1>
+                    <p>You have <span id="notes-count">0</span> active notes. Last login: <span id="last-login">Today</span></p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #4f46e5;">
+                            <i class="fas fa-sticky-note"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-notes">0</h3>
+                            <p>Total Notes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #10b981;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="active-notes">0</h3>
+                            <p>Active Notes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #f59e0b;">
+                            <i class="fas fa-archive"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="archived-notes">0</h3>
+                            <p>Archived</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #ef4444;">
+                            <i class="fas fa-paperclip"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="attachments-count">0</h3>
+                            <p>Attachments</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-notes">
+                    <h2>Recent Notes</h2>
+                    <div class="notes-grid" id="recent-notes-grid">
+                        <!-- Recent notes will be loaded here -->
+                        <div class="empty-state">
+                            <i class="fas fa-sticky-note"></i>
+                            <p>No notes yet. Create your first note!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- My Notes Section -->
+            <section id="notes-section" class="content-section">
+                <div class="section-header">
+                    <h2>My Notes</h2>
+                    <div class="actions">
+                        <select id="filter-category" class="filter-select">
+                            <option value="">All Categories</option>
+                            <option value="personal">Personal</option>
+                            <option value="work">Work</option>
+                            <option value="study">Study</option>
+                            <option value="ideas">Ideas</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <select id="filter-status" class="filter-select">
+                            <option value="active">Active</option>
+                            <option value="archived">Archived</option>
+                            <option value="deleted">Deleted</option>
+                        </select>
+                        <button class="btn-secondary" onclick="refreshNotes()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="notes-container">
+                    <div class="notes-list" id="notes-list">
+                        <!-- Notes will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Create Note Section -->
+            <section id="create-section" class="content-section">
+                <h2>Create New Note</h2>
+                <form id="create-note-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="note-title">
+                                <i class="fas fa-heading"></i> Title
+                            </label>
+                            <input type="text" id="note-title" placeholder="Enter note title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="note-category">
+                                <i class="fas fa-folder"></i> Category
+                            </label>
+                            <select id="note-category" required>
+                                <option value="personal">Personal</option>
+                                <option value="work">Work</option>
+                                <option value="study">Study</option>
+                                <option value="ideas">Ideas</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="note-priority">
+                                <i class="fas fa-flag"></i> Priority
+                            </label>
+                            <select id="note-priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="note-tags">
+                                <i class="fas fa-tags"></i> Tags (comma separated)
+                            </label>
+                            <input type="text" id="note-tags" placeholder="e.g., meeting, project, important">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="note-content">
+                            <i class="fas fa-file-alt"></i> Content
+                        </label>
+                        <textarea id="note-content" rows="10" placeholder="Write your note here..." required></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Save Note
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="clearNoteForm()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Search Section -->
+            <section id="search-section" class="content-section">
+                <h2>Search Notes</h2>
+                
+                <div class="search-box">
+                    <div class="search-input-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-query" placeholder="Search by title or content...">
+                        <button class="btn-primary" onclick="searchNotes()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    
+                    <div class="search-filters">
+                        <div class="filter-group">
+                            <label><i class="fas fa-filter"></i> Advanced Filters</label>
+                            <div class="filter-options">
+                                <select id="search-category">
+                                    <option value="">Any Category</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="work">Work</option>
+                                    <option value="study">Study</option>
+                                    <option value="ideas">Ideas</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                
+                                <select id="search-priority">
+                                    <option value="">Any Priority</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                                
+                                <input type="text" id="search-tag" placeholder="Filter by tag...">
+                                
+                                <input type="date" id="search-date-from" placeholder="From date">
+                                <input type="date" id="search-date-to" placeholder="To date">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="search-results">
+                    <h3>Search Results</h3>
+                    <div class="results-container" id="search-results">
+                        <!-- Search results will appear here -->
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Enter search terms to find notes</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section id="upload-section" class="content-section">
+                <h2>Upload Files</h2>
+                
+                <div class="upload-container">
+                    <div class="upload-box" id="upload-dropzone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Drop files here or click to upload</h3>
+                        <p>Supports images, PDFs, documents (Max: 5MB)</p>
+                        <input type="file" id="file-input" multiple style="display: none;">
+                        <button class="btn-primary" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-folder-open"></i> Browse Files
+                        </button>
+                    </div>
+                    
+                    <div class="file-list" id="file-list">
+                        <!-- Uploaded files will appear here -->
+                        <div class="empty-state">
+                            <i class="fas fa-file-upload"></i>
+                            <p>No files uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Section -->
+            <section id="admin-section-content" class="content-section">
+                <h2>Admin Panel</h2>
+                
+                <div class="admin-stats">
+                    <div class="admin-stat">
+                        <h3 id="total-users">0</h3>
+                        <p>Total Users</p>
+                    </div>
+                    <div class="admin-stat">
+                        <h3 id="total-notes-admin">0</h3>
+                        <p>Total Notes</p>
+                    </div>
+                    <div class="admin-stat">
+                        <h3 id="total-attachments">0</h3>
+                        <p>Total Attachments</p>
+                    </div>
+                </div>
+                
+                <div class="users-table">
+                    <h3>User Management</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="system-actions">
+                    <h3>System Actions</h3>
+                    <div class="action-buttons">
+                        <button class="btn-danger" onclick="clearAllData()">
+                            <i class="fas fa-trash"></i> Clear All Data
+                        </button>
+                        <button class="btn-warning" onclick="exportData()">
+                            <i class="fas fa-download"></i> Export Data
+                        </button>
+                        <button class="btn-secondary" onclick="importData()">
+                            <i class="fas fa-upload"></i> Import Data
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Edit Note Modal -->
+    <div class="modal" id="edit-note-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Note</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-note-form">
+                    <input type="hidden" id="edit-note-id">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="edit-note-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea id="edit-note-content" rows="6" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="edit-note-status">
+                            <option value="active">Active</option>
+                            <option value="archived">Archived</option>
+                            <option value="deleted">Deleted</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
